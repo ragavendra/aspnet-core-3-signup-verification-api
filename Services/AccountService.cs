@@ -59,12 +59,12 @@ namespace WebApi.Services
                 throw new AppException("Email or password is incorrect");
 
             // authentication successful so generate jwt and refresh tokens
-            var jwtToken = generateJwtToken(account);
+            var jwtToken = generateJwtToken(account.Id);
             var refreshToken = generateRefreshToken(ipAddress);
             account.RefreshTokens.Add(refreshToken);
 
             // remove old refresh tokens from account
-            removeOldRefreshTokens(account);
+            removeOldRefreshTokens(account.RefreshTokens);
 
             // save changes to db
             _context.Update(account);
@@ -87,13 +87,13 @@ namespace WebApi.Services
             refreshToken.ReplacedByToken = newRefreshToken.Token;
             account.RefreshTokens.Add(newRefreshToken);
 
-            removeOldRefreshTokens(account);
+            removeOldRefreshTokens(account.RefreshTokens);
 
             _context.Update(account);
             _context.SaveChanges();
 
             // generate new jwt
-            var jwtToken = generateJwtToken(account);
+            var jwtToken = generateJwtToken(account.Id);
 
             var response = _mapper.Map<AuthenticateResponse>(account);
             response.JwtToken = jwtToken;
@@ -281,13 +281,13 @@ namespace WebApi.Services
             return (refreshToken, account);
         }
 
-        private string generateJwtToken(Account account)
+        private string generateJwtToken(int accountId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] { new Claim("id", account.Id.ToString()) }),
+                Subject = new ClaimsIdentity(new[] { new Claim("id", accountId.ToString()) }),
                 Expires = DateTime.UtcNow.AddMinutes(15),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
@@ -306,10 +306,10 @@ namespace WebApi.Services
             };
         }
 
-        private void removeOldRefreshTokens(Account account)
+        private void removeOldRefreshTokens(List<RefreshToken> refreshTokens)
         {
-            account.RefreshTokens.RemoveAll(x => 
-                !x.IsActive && 
+            refreshTokens.RemoveAll(x =>
+                !x.IsActive &&
                 x.Created.AddDays(_appSettings.RefreshTokenTTL) <= DateTime.UtcNow);
         }
 
