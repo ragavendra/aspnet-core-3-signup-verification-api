@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using WebApi.Entities;
 
 namespace WebApi.Models.Accounts
 {
