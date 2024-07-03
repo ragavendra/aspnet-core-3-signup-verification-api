@@ -10,6 +10,7 @@ using WebApi.Helpers;
 
 namespace WebApi.Middleware
 {
+    // Extract token and append it to context to know if it is an auth user or not
     public class JwtMiddleware
     {
         private readonly RequestDelegate _next;
@@ -53,7 +54,7 @@ namespace WebApi.Middleware
                 // attach account to context on successful jwt validation
                 context.Items["Account"] = await dataContext.Accounts.FindAsync(accountId);
             }
-            catch 
+            catch
             {
                 // do nothing if jwt validation fails
                 // account is not attached to context so request won't have access to secure routes
