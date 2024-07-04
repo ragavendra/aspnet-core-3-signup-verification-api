@@ -1,3 +1,6 @@
+# About
+This repo is a clone like in clone with additional features mentioned in [features](#features).
+
 # aspnet-core-3-signup-verification-api
 
 ASP.NET Core 3.1 - Boilerplate API with Email Sign Up, Verification, Authentication & Forgot Password
@@ -15,3 +18,13 @@ dotnet run --project ./WebApi/WebApi.csproj
 ```
 dotnet test
 ```
+
+## Features
+
+a. Reducing memory footprint. (***In progress***)
+b. Adding unit tests for controller.
+
+## Planned features
+
+a. Unit tests for middleware.
+b. Unit tests for services.
