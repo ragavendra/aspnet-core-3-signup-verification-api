@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using WebApi.Controllers;
+using WebApi.Entities;
 using WebApi.Models.Accounts;
 using WebApi.Services;
 
@@ -105,6 +106,52 @@ namespace WebApiTests
 
             Assert.Matches("abc@email.com", authResp_.Email);
             Assert.Matches("rfrshToken", authResp_.RefreshToken);
+        }
+
+        [Fact]
+        public async Task RevokeToken()
+        {
+            // Arrange
+            // var authReq = new Mock<AuthenticateRequest>();
+            var revTknReq = new RevokeTokenRequest() { Token = "some" };
+            var authResp = new AuthenticateResponse(){ Email = "abc@email.com", RefreshToken = "rfrshToken" };
+
+            var mockRepo = new Mock<IAccountService>();
+            var mockMapper = new Mock<IMapper>();
+
+            var httpContext = new DefaultHttpContext(); // or mock a `HttpContext`
+            httpContext.Request.Headers["token"] = "fake_token_here"; //Set header
+                                                                      //Controller needs a controller context
+
+            httpContext.Request.Headers["X-Forwarded-For"] = "";
+            httpContext.Items["Account"] = new Account(){ RefreshTokens = new List<RefreshToken>() { new WebApi.Entities.RefreshToken() { Token = "token" }}};
+
+            var controllerContext = new ControllerContext()
+            {
+                HttpContext = httpContext,
+            };
+
+            mockRepo.Setup(repo => repo.RevokeToken(It.IsAny<string>(), It.IsAny<string>()));
+                //.Returns(authResp);
+
+            var controller = new AccountsController(mockRepo.Object, mockMapper.Object) {
+                ControllerContext = controllerContext
+             };
+
+            // Act
+            var res = controller.RevokeToken(revTknReq);
+            // .Authenticate(authReq);
+
+            // Assert
+            var resp = Assert.IsType<OkObjectResult>(res);
+
+            // var resp = Assert.IsType<ActionResult>(res);
+            // Assert.Matches("abc@email.com", resp.Value.message);
+            var authResp_ = Assert.IsAssignableFrom<object>(resp.Value);
+
+            // var someObj = new { key = "" };
+            Assert.Matches("{ message = Token revoked }", authResp_.ToString());
+            // Assert.Matches("rfrshToken", authResp_.RefreshToken);
         }
     }
 }
