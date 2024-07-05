@@ -1,5 +1,5 @@
 # About
-This repo is a clone like in clone with additional features mentioned in [features](#features).
+This repo is a fork of [this](https://github.com/cornflourblue/aspnet-core-3-signup-verification-api) with additional features mentioned in [features](#features).
 
 # aspnet-core-3-signup-verification-api
 
