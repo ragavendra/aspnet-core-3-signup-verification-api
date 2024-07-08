@@ -208,6 +208,7 @@ namespace WebApiTests
             Assert.Matches("{ message = Token revoked }", authResp_.ToString());
             // Assert.Matches("rfrshToken", authResp_.RefreshToken);
         }
+
         [Fact]
         public async Task RevokeValidToken()
         {
@@ -405,26 +406,6 @@ namespace WebApiTests
 
             var mockRepo = new Mock<IAccountService>();
             var mockMapper = new Mock<IMapper>();
-
-            var httpContext = new DefaultHttpContext(); // or mock a `HttpContext`
-            // httpContext.Request.Headers["origin"] = "fake_token_here"; //Set header
-                                                                      //Controller needs a controller context
-
-/*
-            httpContext.Items["Account"] = new Account()
-            {
-                RefreshTokens = new List<RefreshToken>() { new WebApi.Entities.RefreshToken() { Token = "token" } },
-                Role = Role.User
-            };*/
-
-            var controllerContext = new ControllerContext()
-            {
-                HttpContext = httpContext,
-            };
-
-            // mockRepo.Setup(repo => repo.Register(It.IsAny<RegisterRequest>(), It.IsAny<string>()));
-                //.Returns(authResp);
-
             var controller = new AccountsController(mockRepo.Object, mockMapper.Object) {
                 // ControllerContext = controllerContext
              };
@@ -438,6 +419,39 @@ namespace WebApiTests
 
             // var someObj = new { key = "" };
             Assert.Matches("{ message = Verification successful, you can now login }", authResp_.ToString());
+        }
+
+        [Fact]
+        public async Task ForgotPassword()
+        {
+            // Arrange
+            // var authReq = new Mock<AuthenticateRequest>();
+            var model = new ForgotPasswordRequest { };
+
+            var mockRepo = new Mock<IAccountService>();
+            var mockMapper = new Mock<IMapper>();
+
+            var httpContext = new DefaultHttpContext(); // or mock a `HttpContext`
+            // httpContext.Request.Headers["origin"] = "fake_token_here"; //Set header
+                                                                      //Controller needs a controller context
+            var controllerContext = new ControllerContext()
+            {
+                HttpContext = httpContext,
+            };
+
+            var controller = new AccountsController(mockRepo.Object, mockMapper.Object) {
+                ControllerContext = controllerContext
+             };
+
+            // Act
+            var res = controller.ForgotPassword(model);
+
+            // Assert
+            var resp = Assert.IsType<OkObjectResult>(res);
+            var authResp_ = Assert.IsAssignableFrom<object>(resp.Value);
+
+            // var someObj = new { key = "" };
+            Assert.Matches("{ message = Please check your email for password reset instructions }", authResp_.ToString());
         }
 
 
