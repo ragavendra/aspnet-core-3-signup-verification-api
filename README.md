@@ -22,9 +22,11 @@ dotnet test
 ## Features
 
 a. Reducing memory footprint. (***In progress***)
+
 b. Adding unit tests for controller.
+
+c. Unit tests for middleware. (***In Progress***)
 
 ## Planned features
 
-a. Unit tests for middleware.
-b. Unit tests for services.
+a. Unit tests for services.
