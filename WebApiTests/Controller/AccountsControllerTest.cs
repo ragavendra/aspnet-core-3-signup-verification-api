@@ -13,7 +13,6 @@ namespace WebApiTests
     {
         // Model validation happens in middleware? hence no validation occurs here
         [Obsolete]
-        [Fact]
         public void CheckDataAttributes() {
 
             // Assert.Raises()
