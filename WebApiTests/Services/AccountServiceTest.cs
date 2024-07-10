@@ -1,9 +1,8 @@
 using AutoMapper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Moq;
-using WebApi.Controllers;
 using WebApi.Entities;
 using WebApi.Helpers;
 using WebApi.Models.Accounts;
@@ -17,34 +16,48 @@ namespace WebApiTests
         public async Task AuthenticateRequest()
         {
             // Arrange
-            // var authReq = new Mock<AuthenticateRequest>();
-            var authReq = new AuthenticateRequest();
-            var authResp = new AuthenticateResponse(){ Email = "abc@email.com", RefreshToken = "rfrshToken" };
+            var authReq = new AuthenticateRequest() { Email = "abc@email.com", Password = "string" };
+            var authResp = new AuthenticateResponse() { Email = "abc@email.com", RefreshToken = "rfrshToken" };
 
             var mockRepo = new Mock<IAccountService>();
             var mockMapper = new Mock<IMapper>();
-            var dtCtxt = new Mock<DataContext>();
+            mockMapper.Setup(c => c.Map<AuthenticateResponse>(It.IsAny<Account>())).Returns(authResp);
 
-            // var appSttgs = new Mock<AppSettings>();
-            var appSttgs = new Mock<IOptions<AppSettings>>();
-            var emlSrvc = new Mock<EmailService>();
+            var data = new List<Account>
+            {
+                new Account {
+                    Email = "abc@email.com",
+                    Verified = DateTime.Now,
+                    PasswordHash = "$2a$11$j3Hhr8P5PEntOVGDTIUmQOCT7tp0lDBS40PvQb7PTiTsyx9ki1T6.",
+                    RefreshTokens = new List<RefreshToken>()
+                     },
+                new Account { Email = "rgf@email.com", Verified = DateTime.Now, PasswordHash = "string" },
+            }.AsQueryable();
 
-            var acctSrvc = new AccountService(dtCtxt.Object, mockMapper.Object, appSttgs.Object, emlSrvc.Object);
-            dtCtxt.Setup(ctx => ctx.Accounts.SingleOrDefault()).Returns(new Account(){ Verified = default });
+            var mockSet = new Mock<DbSet<Account>>();
+            mockSet.As<IQueryable<Account>>().Setup(m => m.Provider).Returns(data.Provider);
+            mockSet.As<IQueryable<Account>>().Setup(m => m.Expression).Returns(data.Expression);
+            mockSet.As<IQueryable<Account>>().Setup(m => m.ElementType).Returns(data.ElementType);
+            mockSet.As<IQueryable<Account>>().Setup(m => m.GetEnumerator()).Returns(() => data.GetEnumerator());
+
+            var mockDtCtxt = new Mock<DataContext>(new Mock<IConfiguration>().Object);
+            mockDtCtxt.Setup(c => c.Accounts).Returns(mockSet.Object);
+
+            var mockAppSttgs = new Mock<IOptions<AppSettings>>();
+            mockAppSttgs.Setup(c => c.Value).Returns(new AppSettings() { Secret = "ThisIsaS3cretsecrwt" });
+
+            var mockEmlSrvc = new Mock<EmailService>(new Mock<IOptions<AppSettings>>().Object);
+
+            var acctSrvc = new AccountService(mockDtCtxt.Object, mockMapper.Object, mockAppSttgs.Object, mockEmlSrvc.Object);
 
             // Act
             var res = acctSrvc.Authenticate(authReq, "");
 
-/*
             // Assert
-            var resp = Assert.IsType<OkObjectResult>(res.Result);
+            var resp = Assert.IsType<AuthenticateResponse>(res);
 
-            // var resp = Assert.IsType<ActionResult>(res);
-            var authResp_ = Assert.IsAssignableFrom<AuthenticateResponse>(resp.Value);
-
-            Assert.Matches("abc@email.com", authResp_.Email);
-            Assert.Matches("rfrshToken", authResp_.RefreshToken);*/
+            Assert.Matches("abc@email.com", resp.Email);
+            Assert.NotNull(resp.RefreshToken);
         }
-
     }
 }
