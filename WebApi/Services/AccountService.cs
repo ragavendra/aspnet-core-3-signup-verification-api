@@ -32,7 +32,7 @@ namespace WebApi.Services
         void Delete(int id);
     }
 
-    public class AccountService : IAccountService
+    public class AccountService : IAccountService, IDisposable
     {
         private readonly DataContext _context;
         private readonly IMapper _mapper;
@@ -225,8 +225,16 @@ namespace WebApi.Services
             account.Created = DateTime.UtcNow;
             account.Verified = DateTime.UtcNow;
 
+            // char[] some = { 'a', 'f' };
+            string str = "";
+
+            foreach (char ch in model.Password)
+            {
+                str = str + ch.ToString();
+            }
+
             // hash password
-            account.PasswordHash = BC.HashPassword(model.Password);
+            account.PasswordHash = BC.HashPassword(str);
 
             // save account
             _context.Accounts.Add(account);
@@ -384,6 +392,11 @@ namespace WebApi.Services
                 html: $@"<h4>Reset Password Email</h4>
                          {message}"
             );
+        }
+
+        public void Dispose()
+        {
+            // throw new NotImplementedException();
         }
     }
 }
